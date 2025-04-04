@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIDS Nebula Hub - Chatbot</title>
+    <!-- Add Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #121212; /* Dark background for the website */
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Chatbot Icon (Round Button) */
+        .chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #5b4b9b, #1e1a2f);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(123, 104, 238, 0.5); /* Glowing effect with #7b68ee */
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            z-index: 1000;
+        }
+
+        .chatbot-icon:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(123, 104, 238, 0.8);
+        }
+
+        .chatbot-icon-robot {
+            font-size: 30px; /* Size of the robot emoji */
+            color: #f472b6; /* Soft pink color */
+            text-shadow: 0 0 5px #60a5fa; /* Light blue glow */
+            animation: glow 2s infinite ease-in-out;
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px #60a5fa, 0 0 10px #7b68ee; }
+            50% { text-shadow: 0 0 10px #60a5fa, 0 0 20px #7b68ee; }
+            100% { text-shadow: 0 0 5px #60a5fa, 0 0 10px #7b68ee; }
+        }
+
+        /* Chatbot Container (Toggles Open/Closed) */
+        .chatbot-container {
+            position: fixed;
+            bottom: 90px; /* Above the icon */
+            right: 20px;
+            width: 375px; /* Mobile size */
+            height: 667px;
+            display: none; /* Hidden by default */
+            z-index: 999;
+        }
+
+        /* Show the chatbot when active */
+        .chatbot-container.active {
+            display: block;
+        }
+
+        /* Ensure the chatbot fits on smaller screens */
+        @media (max-width: 400px) {
+            .chatbot-container {
+                width: 100%;
+                height: 80vh;
+                bottom: 0;
+                right: 0;
+            }
+
+            .chatbot-icon {
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+
+        /* Existing AIDS Nebula Hub Styles (Unchanged) */
+        .nebula-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: rgba(220, 220, 240, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(163, 191, 250, 0.3);
+            overflow: hidden;
+            border: 2px solid #a3bffa;
+        }
+
+        .nebula-header {
+            padding: 15px;
+            background: linear-gradient(90deg, #5b4b9b, #7b68ee);
+            color: #ffffff;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .content-area {
+            display: flex;
+            height: calc(100% - 60px);
+            flex-direction: row;
+        }
+
+        .options-panel {
+            width: 120px;
+            padding: 10px;
+            background: linear-gradient(45deg, #3b2f5b, #5b4b9b);
+            overflow-y: auto;
+        }
+
+        .info-display {
+            width: 255px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(220, 220, 240, 0.05);
+        }
+
+        .message {
+            max-width: 90%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            animation: fadeIn 0.3s ease;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            align-self: flex-end;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(163, 191, 250, 0.2);
+        }
+
+        .bot-message {
+            background: linear-gradient(to right, #f472b6, #6b46c1, #4c51bf);
+            border: 1px solid #4c51bf;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            align-self: flex-start;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .welcome-message {
+            background: linear-gradient(135deg, #7b68ee, #c084fc);
+            align-self: flex-start;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(163, 191, 250, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Robot Animation for Fetching (Unchanged) */
+        .fetching-robot {
+            display: inline-block;
+            font-size: 24px; /* Size of the robot emoji */
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .nebula-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: linear-gradient(45deg, #5b4b9b, #7b68ee);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nebula-btn:hover {
+            background: linear-gradient(45deg, #3b82f6, #60a5fa);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .nebula-btn::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: -100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: 0.5s;
+        }
+
+        .nebula-btn:hover::after {
+            left: 100%;
+        }
+
+        .sub-options {
+            display: none;
+            padding-left: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Chatbot Icon (Round Button) -->
+    <div class="chatbot-icon" onclick="toggleChatbot()">
+        <span class="chatbot-icon-robot">🤖</span>
+    </div>
+
+    <!-- Chatbot Container (Toggles Open/Closed) -->
+    <div class="chatbot-container" id="chatbotContainer">
+        <!-- Existing AIDS Nebula Hub Interface (Unchanged) -->
+        <div class="nebula-container">
+            <div class="nebula-header">AIDS Nebula Hub</div>
+            <div class="content-area">
+                <div class="options-panel">
+                    <button class="nebula-btn" onclick="toggleOptions('syllabus')">📚 Syllabus</button>
+                    <div id="syllabus" class="sub-options">
+                        <button class="nebula-btn" onclick="showSyllabus('Sem1')">Sem 1</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem2')">Sem 2</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem3')">Sem 3</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem4')">Sem 4</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem5')">Sem 5</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem6')">Sem 6</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem7')">Sem 7</button>
+                        <button class="nebula-btn" onclick="showSyllabus('Sem8')">Sem 8</button>
+                    </div>
+
+                    <button class="nebula-btn" onclick="toggleOptions('faculty')">👩‍🏫 Faculty</button>
+                    <div id="faculty" class="sub-options">
+                        <button class="nebula-btn" onclick="showFaculty('all')">All Faculty</button>
+                    </div>
+
+                    <button class="nebula-btn" onclick="toggleOptions('timetable')">⏰ Timetable</button>
+                    <div id="timetable" class="sub-options">
+                        <button class="nebula-btn" onclick="showTimetable('current')">Current</button>
+                    </div>
+
+                    <button class="nebula-btn" onclick="toggleOptions('resources')">📖 Resources</button>
+                    <div id="resources" class="sub-options">
+                        <button class="nebula-btn" onclick="showResources('labs')">Labs</button>
+                        <button class="nebula-btn" onclick="showResources('projects')">Projects</button>
+                        <button class="nebula-btn" onclick="showResources('clubs')">Clubs</button>
+                    </div>
+
+                    <button class="nebula-btn" onclick="toggleOptions('events')">🎉 Events</button>
+                    <div id="events" class="sub-options">
+                        <button class="nebula-btn" onclick="showEvents('upcoming')">Upcoming</button>
+                        <button class="nebula-btn" onclick="showEvents('workshops')">Workshops</button>
+                    </div>
+
+                    <button class="nebula-btn" onclick="toggleOptions('placements')">💼 Placements</button>
+                    <div id="placements" class="sub-options">
+                        <button class="nebula-btn" onclick="showPlacements('stats')">Stats</button>
+                        <button class="nebula-btn" onclick="showPlacements('companies')">Companies</button>
+                    </div>
+                </div>
+                <div class="info-display" id="infoDisplay">
+                    <div class="message welcome-message">Welcome to the AIDS Nebula Hub! Tap an option to explore! ✨</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle Chatbot Visibility
+        function toggleChatbot() {
+            const chatbotContainer = document.getElementById('chatbotContainer');
+            chatbotContainer.classList.toggle('active');
+        }
+
+        // Existing AIDS Nebula Hub JavaScript (Unchanged)
+        let lastFetchingMessage = null;
+
+        function toggleOptions(id) {
+            const subOptions = document.getElementsByClassName('sub-options');
+            for (let option of subOptions) {
+                option.style.display = 'none';
+            }
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function addMessage(content, isUser = false, isWelcome = false) {
+            const infoDisplay = document.getElementById('infoDisplay');
+            const message = document.createElement('div');
+            message.className = `message ${isUser ? 'user-message' : isWelcome ? 'welcome-message' : 'bot-message'}`;
+            message.innerHTML = content;
+            infoDisplay.appendChild(message);
+            infoDisplay.scrollTop = infoDisplay.scrollHeight;
+            return message;
+        }
+
+        function showFetching(request) {
+            addMessage(request, true);
+            lastFetchingMessage = addMessage('<span class="fetching-robot">🤖</span>');
+        }
+
+        function removeFetching() {
+            if (lastFetchingMessage) {
+                lastFetchingMessage.remove();
+                lastFetchingMessage = null;
+            }
+        }
+
+        function fetchCSV(file, key, callback) {
+            fetch(file)
+                .then(response => response.text())
+                .then(data => {
+                    const rows = data.split('\n');
+                    let result = '';
+                    rows.forEach(row => {
+                        const columns = row.split(',');
+                        if (columns[0].trim() === key) {
+                            result = columns.slice(1).join('<br>');
+                        }
+                    });
+                    callback(result);
+                })
+                .catch(error => console.error('Error fetching CSV:', error));
+        }
+
+        function showSyllabus(sem) {
+            showFetching(`Viewing ${sem} Syllabus`);
+            fetchCSV('syllabus.csv', sem, (result) => {
+                setTimeout(() => {
+                    removeFetching();
+                    addMessage(`<strong>${sem} Syllabus:</strong><br>${result || 'No data available'}`);
+                }, 2000);
+            });
+        }
+
+        function showFaculty(type) {
+            showFetching('Fetching Faculty...');
+            fetchCSV('faculty.csv', type, (result) => {
+                setTimeout(() => {
+                    removeFetching();
+                    addMessage(`<strong>Faculty:</strong><br>${result || 'No data available'}`);
+                }, 2000);
+            });
+        }
+
+        function showTimetable(type) {
+            showFetching('Retrieving Timetable');
+            fetchCSV('timetable.csv', type, (result) => {
+                setTimeout(() => {
+                    removeFetching();
+                    addMessage(`<strong>Timetable:</strong><br>${result || 'No data available'}`);
+                }, 2000);
+            });
+        }
+
+        function showResources(type) {
+            showFetching(`Loading ${type}`);
+            fetchCSV('resources.csv', type, (result) => {
+                setTimeout(() => {
+                    removeFetching();
+                    addMessage(`<strong>${type}:</strong><br>${result || 'No data available'}`);
+                }, 2000);
+            });
+        }
+
+        function showEvents(type) {
+            showFetching(`Checking ${type} Events`);
+            fetchCSV('events.csv', type, (result) => {
+                setTimeout(() => {
+                    removeFetching();
+                    addMessage(`<strong>${type} Events:</strong><br>${result || 'No data available'}`);
+                }, 2000);
+            });
+        }
+
+        function showPlacements(type) {
+            showFetching(`Reviewing ${type}`);
+            fetchCSV('placements.csv', type, (result) => {
+                setTimeout(() => {
+                    removeFetching();
+                    addMessage(`<strong>${type}:</strong><br>${result || 'No data available'}`);
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
